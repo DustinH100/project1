@@ -58,13 +58,22 @@ def test_VendingMachine():
     vending.update()
     assert vending.amount == 540
     
+# Testing the amount of coins is enough
     vending.amount = 50  # Set amount to be sufficient for the product
     vending.event = "skittle"
     vending.update()
     assert vending.state.name == "count_change"
     assert vending.change_due == 45
     
+#Testing when the coins aren't enough
     vending.amount = 20  # Set amount to be insufficient for the product
     vending.event = 'starburst'
     vending.update()
     assert vending.state.name == 'waiting'
+    
+#Testing when product is sold out
+    product_name = "skittle"  
+    VendingMachine.PRODUCTS[product_name] = (product_name, 5, 0)
+    vending.event = "skittle"
+    vending.update()
+    assert f"Sorry, {product_name} is sold out."

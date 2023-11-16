@@ -1,3 +1,7 @@
+"""# A Vending machine using pysimplegui
+ Edited and adapted by Dustin Horne 100844416
+ November 16, 2023
+"""
 #!/usr/bin/env python3
 
 # STUDENT version for Project 1.
@@ -7,10 +11,6 @@
 # Louis Bertrand
 # Oct 4, 2021 - initial version
 # Nov 17, 2022 - Updated for Fall 2022.
-
-# A Vending machine using pysimplegui
-# Edited and adapted by Dustin Horne 100844416
-# November 16, 2023
 
 # PySimpleGUI recipes used:
 #
@@ -55,10 +55,13 @@ def log(s):
 # For testing purposes, output is to stdout, also ensure use of Docstring, in class
 class VendingMachine(object):
     
-    PRODUCTS = {"skittle": ("SKITTLE", 5), "mint": ("MINT", 10),
-                "starburst": ("STARBURST", 25),
-                "licorice": ("LICORICE", 100), "car": ("CAR", 200)
-                }
+    PRODUCTS = {
+        "skittle": ("SKITTLE", 5, 10),  # Product name, price, quantity
+        "mint": ("MINT", 10, 5),
+        "starburst": ("STARBURST", 25, 3),
+        "licorice": ("LICORICE", 100, 2),  
+        "car": ("CAR", 200, 8),
+    }
 
     # List of coins: each tuple is ("VALUE", value in cents)
     COINS = {"5": ("5", 5),"10": ("10", 10), "25": ("25", 25),
@@ -128,14 +131,24 @@ class State(object):
 # In the waiting state, the machine waits for the first coin
 class WaitingState(State):
     _NAME = "waiting"
+    
     def update(self, machine):
         if machine.event in machine.COINS:
             machine.add_coin(machine.event)
             machine.go_to_state('add_coins')
+        elif machine.event in machine.PRODUCTS:
+            product_name, price, quantity = machine.PRODUCTS[machine.event]
+            if quantity > 0:
+                machine.go_to_state('add_coins')
+            else:
+                print(f"Sorry, {product_name} is sold out.")
+        else:
+            pass
 
 # Additional coins, until a product button is pressed
 class AddCoinsState(State):
     _NAME = "add_coins"
+    
     def update(self, machine):
         if machine.event == "RETURN":
             machine.change_due = machine.amount  # return entire amount
@@ -144,10 +157,15 @@ class AddCoinsState(State):
         elif machine.event in machine.COINS:
             machine.add_coin(machine.event)
         elif machine.event in machine.PRODUCTS:
-            if machine.amount >= machine.PRODUCTS[machine.event][1]:
+            product_name, price, quantity = machine.PRODUCTS[machine.event]
+            if quantity > 0 and machine.amount >= price:
+                machine.PRODUCTS[machine.event] = (product_name, price, quantity - 1)
                 machine.go_to_state('deliver_product')
+            elif quantity <= 0:
+                print(f"Sorry, {product_name} is sold out.")
         else:
-            pass  # else ignore the event, not enough money for product
+            pass
+
 
 # Print the product being delivered
 class DeliverProductState(State):
